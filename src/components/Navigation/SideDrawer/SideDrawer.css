@@ -1,0 +1,34 @@
+.SideDrawer {
+    position: fixed;
+    width: 280px;
+    max-width: 50%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    z-index: 200;
+    background-color: #C0B283;
+    padding: 32px 16px;
+    box-sizing: border-box;
+    transition: transform 0.3s ease-out;
+}
+
+@media (min-width: 500px){
+    .SideDrawer{
+        display: none;
+    }
+}
+
+.Logo{
+    height: 10%;
+    margin-bottom: 32px;
+}
+
+.Open {
+    /* Shift the side drawer to the position defined in .SideDrawer above  */
+    transform: translateX(0);
+}
+
+.Close {
+    /* Shift to the left */
+    transform: translateX(-100%);
+}

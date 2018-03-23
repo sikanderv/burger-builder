@@ -6,8 +6,13 @@ import Backdrop from '../Backdrop/Backdrop';
 
 class Modal extends Component {
 
+    // Manage when Modal should be shown
+    // show={this.state.ordering} from the BurgerBuilder container
+    // children = <Spinner/>, again called in the BurgerBuilder container
     shouldComponentUpdate(nextProps, nextState){
-        return nextProps.show !== this.props.show;
+        return nextProps.show !== this.props.show ||
+        // this condition added after spinner component (which is a child of the Modal component) added
+        nextProps.children !== this.props.children;
 
     }
 

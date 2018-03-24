@@ -22,15 +22,10 @@ const INGREDIENT_PRICES = {
 }
 
 class BurgerBuilder extends Component {
-    
+
     // ingredients => name_of_ingredient: quantity
     state = {
-        ingredients: {
-            salad: 0,
-            cheese: 0,
-            bacon: 0,
-            meat: 0
-        },
+        ingredients: null,
         // Base price with 0 ingredients
         totalPrice: 4,
         // for managing Purchase state - whether or not user can click on ORDER NOW button
@@ -38,20 +33,35 @@ class BurgerBuilder extends Component {
         // for managing Modal state
         ordering: false,
         // for managing Spinner state
-        loading: false
+        loading: false,
+        // for rendering error message if GET fails or any other runtime error
+        error: false
     };
+
+    // Common lifecycle hook for fetching/sending data from and to the Internet
+    componentDidMount() {
+        axios.get('https://react-burger-ed455.firebaseio.com/ingredients.json')
+            .then(response => {
+                this.setState({
+                    ingredients: response.data
+                })
+            }).catch(error => {
+                this.setState({error: true});
+            });
+    }
+
 
     updatePurchaseState(ingredients) {
 
         const sum = Object.keys(ingredients)
-                    .map(igKey => {
-                        return ingredients[igKey];
-                    })
-                    .reduce((sum, el) => {
-                        return sum + el;
-                    }, 0);
+            .map(igKey => {
+                return ingredients[igKey];
+            })
+            .reduce((sum, el) => {
+                return sum + el;
+            }, 0);
 
-        this.setState({purchaseable: sum>0});
+        this.setState({ purchaseable: sum > 0 });
     }
 
     orderHandler = () => {
@@ -91,20 +101,20 @@ class BurgerBuilder extends Component {
             deliveryMethod: 'fastest'
         }
 
-     
+
         // Post order to firebase
         // the below stmnt will create a new 'child node' in the mongodb-like db of firebase
         // '.json' is required only for firebase db - not any others        
         axios.post('/orders.json', order)
-            .then( response => {
+            .then(response => {
                 // Due to async nature, as data is already posted, switch state back to false 
                 // to stop spinner and remove Modal (ordering)
-                this.setState({ loading: false, ordering: false})
+                this.setState({ loading: false, ordering: false })
             })
             .catch(error => {
                 // Due to async nature, as data is already posted, switch state back to false 
                 // to stop spinner and remove Modal (ordering)
-                this.setState({ loading: false, ordering: false})
+                this.setState({ loading: false, ordering: false })
             });
     }
 
@@ -154,30 +164,42 @@ class BurgerBuilder extends Component {
             disabledInfo[key] = disabledInfo[key] <= 0
         }
 
-        let orderSummary = <OrderSummary 
-                            price={this.state.totalPrice}
-                            orderCanceled={this.orderCancelHandler}
-                            orderConfirmed={this.orderConfirmHandler}
-                            ingredients={this.state.ingredients}/>;
-                            
+        let orderSummary = null;
         // while data is being posted
         if (this.state.loading) {
             orderSummary = <Spinner />;
         }
+
+        let burger = this.state.error ? <p style={{textAlign: 'center'}}>Error occurred while fetching ingredients data from Firebase</p> : <Spinner />;
+        
+        if (this.state.ingredients) {
+            burger =
+                <Aux>
+                    <Burger ingredients={this.state.ingredients} />
+                    <BuildControls
+                        addIngredient={this.addIngredientHandler}
+                        removeIngredient={this.removeIngredientHandler}
+                        disabled={disabledInfo}
+                        price={this.state.totalPrice}
+                        purchaseable={this.state.purchaseable}
+                        ordered={this.orderHandler}
+                    />
+                </Aux>;
+
+            orderSummary = <OrderSummary
+                price={this.state.totalPrice}
+                orderCanceled={this.orderCancelHandler}
+                orderConfirmed={this.orderConfirmHandler}
+                ingredients={this.state.ingredients} />;
+
+        };
+
         return (
             <Aux>
                 <Modal show={this.state.ordering} modalClosed={this.orderCancelHandler}>
                     {orderSummary}
                 </Modal>
-                <Burger ingredients={this.state.ingredients}/>
-                <BuildControls 
-                    addIngredient={this.addIngredientHandler}
-                    removeIngredient={this.removeIngredientHandler}
-                    disabled={disabledInfo} 
-                    price={this.state.totalPrice}
-                    purchaseable={this.state.purchaseable}
-                    ordered={this.orderHandler}
-                    />
+                {burger}
             </Aux>
         );
     }

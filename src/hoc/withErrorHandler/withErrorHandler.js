@@ -13,10 +13,12 @@ const withErrorHandler = (WrappedComponent, axios) => {
             error: null
         }
 
-        componentDidMount() {
-
+        // Commonly used lifecycle hook for interacting with data/web services
+        // Initially compDidMount, changed to WillMount due to child compoments getting rendered (Section 10, Lecture 168)
+        // apparently this will not cause side effects, just registers the interceptors
+        componentWillMount() {
             // clear error, if any, from previous responses
-            axios.interceptors.request.use(req => {
+            this.reqInterceptor = axios.interceptors.request.use(req => {
                 this.setState({
                     error: null
                 });
@@ -31,13 +33,20 @@ const withErrorHandler = (WrappedComponent, axios) => {
             // });
 
             // short syntax for the above
-            axios.interceptors.response.use(res => res, error => {
+            this.resInterceptor = axios.interceptors.response.use(res => res, error => {
                 this.setState({error: error});
             });
         }
 
         errorConfirmedHandler = () => {
             this.setState({error: null});
+        }
+
+        // Lecture 169, section 10
+        componentWillUnmount() {
+            // console.log('Inside [componentWillUnmount]', this.reqInterceptor, this.resInterceptor);
+            axios.interceptors.request.eject(this.reqInterceptor);
+            axios.interceptors.response.eject(this.resInterceptor);            
         }
 
         render() {

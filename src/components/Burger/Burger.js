@@ -2,8 +2,12 @@ import React from 'react';
 
 import classes from './Burger.css';
 import BurgerIngredient from './BurgerIngredient/BurgerIngredient';
+import {withRouter} from 'react-router-dom';
 
 const burger = (props) => {
+
+    // log props to confirm there is NO access to match, location, and history 
+    console.log(props);
 
     // Step 1: Convert obj to array to be able to use .map
     // Step 2: Map each ingredient name (iKey = ingredient key) to return an empty array corresponding to its key's index
@@ -35,4 +39,4 @@ const burger = (props) => {
     );
 };
 
-export default burger;
+export default withRouter(burger);

@@ -40,6 +40,9 @@ class BurgerBuilder extends Component {
 
     // Common lifecycle hook for fetching/sending data from and to the Internet
     componentDidMount() {
+        // to check for history, location and match - ROUTING RELATED
+        console.log(this.props);
+
         axios.get('https://react-burger-ed455.firebaseio.com/ingredients.json')
             .then(response => {
                 this.setState({
@@ -77,45 +80,20 @@ class BurgerBuilder extends Component {
     }
 
     orderConfirmHandler = () => {
-        // switch state of loading
-        this.setState({
-            loading: true
-        })
+   
+        // ROUTING RELATED - Section 12, Lecture 206
+        const queryParams = [];
+        for (let i in this.state.ingredients){
+            queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.state.ingredients[i]))
+        };
+        // pus to Checkout  and from there to Contact Data
+        queryParams.push('price=' + this.state.totalPrice);
+        const queryString = queryParams.join('&');
 
-        // build the order object
-        // sidenote: in production db, price should be calculated on the server always
-        // no that user cannot manipulate it in any way
-        const order = {
-            ingredients: this.state.ingredients,
-            price: this.state.totalPrice,
-            // these 2 properties will be built in later modules such as checkout
-            customer: {
-                name: 'Max Schwarmuller',
-                address: {
-                    street: 'Test street 1',
-                    zipCode: '41321',
-                    country: 'Bozoland'
-                },
-                email: 'tests@test.com'
-            },
-            deliveryMethod: 'fastest'
-        }
-
-
-        // Post order to firebase
-        // the below stmnt will create a new 'child node' in the mongodb-like db of firebase
-        // '.json' is required only for firebase db - not any others        
-        axios.post('/orders.json', order)
-            .then(response => {
-                // Due to async nature, as data is already posted, switch state back to false 
-                // to stop spinner and remove Modal (ordering)
-                this.setState({ loading: false, ordering: false })
-            })
-            .catch(error => {
-                // Due to async nature, as data is already posted, switch state back to false 
-                // to stop spinner and remove Modal (ordering)
-                this.setState({ loading: false, ordering: false })
-            });
+        this.props.history.push({
+            pathname: '/checkout',
+            search: '?' + queryString
+        });
     }
 
     addIngredientHandler = (type) => {

@@ -6,6 +6,11 @@ import axios from '../../../axios-orders';
 import Spinner from '../../../components/UI/Spinner/Spinner';
 import Input from '../../../components/UI/Input/Input';
 
+
+import { connect } from 'react-redux';
+import withErrorHandler from '../../../hoc/withErrorHandler/withErrorHandler';
+import * as actions from '../../../store/actions/index';
+
 class ContactData extends Component {
     state = {
         orderForm: {
@@ -44,8 +49,9 @@ class ContactData extends Component {
                 value: '',
                 validation: {
                     required: true,
-                    minLength: 5,
-                    maxLength: 5
+                    minLength: 6,
+                    maxLength: 6,
+                    isZipCode: true
                 },
                 valid: false,
                 touched: false
@@ -71,7 +77,8 @@ class ContactData extends Component {
                 },
                 value: '',
                 validation: {
-                    required: true
+                    required: true,
+                    isEmail: true
                 },
                 valid: false,
                 touched: false
@@ -90,7 +97,7 @@ class ContactData extends Component {
 
             }
         },
-        loading: false,
+        // loading: false, // pre-redux
         formIsValid: false
     }
 
@@ -100,42 +107,47 @@ class ContactData extends Component {
 
         // Form submission
         const formData = {};
-        for (let formElementIdentifier in this.state.orderForm){
+        for (let formElementIdentifier in this.state.orderForm) {
             formData[formElementIdentifier] = this.state.orderForm[formElementIdentifier].value;
         }
 
+        // pre-redux
         // switch state of loading
-        this.setState({
-            loading: true
-        })
+        // this.setState({
+        //     loading: true
+        // })
 
         // build the order object
         // sidenote: in production db, price should be calculated on the server always
         // no that user cannot manipulate it in any way
         const order = {
             // these properties will be built in later modules such as checkout
-            ingredients: this.props.ingredients,
+            ingredients: this.props.ings,
             price: this.props.price,
-            orderData: formData
+            orderData: formData,
+            userId: this.props.userId
         }
 
-
+        // PRE-REDUX
         // Post order to firebase
         // the below stmnt will create a new 'child node' in the mongodb-like db of firebase
         // '.json' is required only for firebase db - not any others        
-        axios.post('/orders.json', order)
-            .then(response => {
-                // Due to async nature, as data is already posted, switch state back to false 
-                // to stop spinner and remove Modal (ordering)
-                this.setState({ loading: false });
-                // Redirect to home page
-                this.props.history.push('/');
-            })
-            .catch(error => {
-                // Due to async nature, as data is already posted, switch state back to false 
-                // to stop spinner and remove Modal (ordering)
-                this.setState({ loading: false })
-            });
+        // axios.post('/orders.json', order)
+        //     .then(response => {
+        //         // Due to async nature, as data is already posted, switch state back to false 
+        //         // to stop spinner and remove Modal (ordering)
+        //         this.setState({ loading: false });
+        //         // Redirect to home page
+        //         this.props.history.push('/');
+        //     })
+        //     .catch(error => {
+        //         // Due to async nature, as data is already posted, switch state back to false 
+        //         // to stop spinner and remove Modal (ordering)
+        //         this.setState({ loading: false })
+        //     });
+
+        // POST-REDUX
+        this.props.onOrderBurger(order, this.props.token);
 
     }
 
@@ -147,12 +159,28 @@ class ContactData extends Component {
         }
 
         if (rules.minLength) {
-            isValid = value.length >= rules.minLength  && isValid;
+            isValid = value.length >= rules.minLength && isValid;
         }
 
         if (rules.maxLength) {
-            isValid = value.length <= rules.maxLength  && isValid;
+            isValid = value.length <= rules.maxLength && isValid;
         }
+
+        if (rules.isEmail) {
+            const pattern = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            isValid = pattern.test(value) && isValid;
+        }
+
+        if (rules.isZipCode) {
+            const pattern = /[a-zA-Z]\d[a-zA-Z]\d[a-zA-Z]\d/;
+            isValid = pattern.test(value) && isValid;
+        }
+
+        if (rules.isNumeric) {
+            const pattern = /^\d+$/;
+            isValid = pattern.test(value) && isValid;
+        }
+
         return isValid;
     };
 
@@ -174,11 +202,11 @@ class ContactData extends Component {
         updatedOrderForm[inputIdentifier] = updatedFormElement;
         // console.log(updatedFormElement);
 
-        let  formIsValid = true;
-        for (let inputIdentifier in updatedOrderForm){
+        let formIsValid = true;
+        for (let inputIdentifier in updatedOrderForm) {
             if (updatedOrderForm[inputIdentifier].validation) {
-                formIsValid = updatedOrderForm[inputIdentifier].valid && formIsValid;    
-            }            
+                formIsValid = updatedOrderForm[inputIdentifier].valid && formIsValid;
+            }
         };
 
         this.setState({
@@ -201,7 +229,7 @@ class ContactData extends Component {
         let form = (
             <form onSubmit={this.orderHandler}>
                 {formElementsArray.map(formElement => (
-                    <Input                    
+                    <Input
                         key={formElement.id}
                         elementType={formElement.config.elementType}
                         elementConfig={formElement.config.elementConfig}
@@ -209,13 +237,15 @@ class ContactData extends Component {
                         invalid={!formElement.config.valid}
                         shouldValidate={formElement.config.validation}
                         touched={formElement.config.touched}
-                        changed={ (event) => this.inputChangedHandler(event, formElement.id)} />
+                        changed={(event) => this.inputChangedHandler(event, formElement.id)} />
                 ))}
                 <Button
                     btnType="Success"
                     disabled={!this.state.formIsValid}>ORDER</Button>
             </form>);
-        if (this.state.loading) {
+
+        // PRE-REDUX = this.state.loading
+        if (this.props.loading) {
             form = <Spinner />;
         }
         return (
@@ -227,4 +257,20 @@ class ContactData extends Component {
     }
 };
 
-export default ContactData;
+const mapStateToProps = state => {
+    return {
+        ings: state.burgerBuilder.ingredients,
+        price: state.burgerBuilder.totalPrice,
+        loading: state.order.loading,
+        token: state.auth.token,
+        userId: state.auth.userId
+    }
+};
+
+const mapDispatchToProps = dispatch => {
+    return {
+        onOrderBurger: (orderData, token) => dispatch(actions.purchaseBurger(orderData, token))
+    }
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(withErrorHandler(ContactData, axios));

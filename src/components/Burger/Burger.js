@@ -7,7 +7,7 @@ import {withRouter} from 'react-router-dom';
 const burger = (props) => {
 
     // log props to confirm there is NO access to match, location, and history 
-    console.log(props);
+    // console.log(props);
 
     // Step 1: Convert obj to array to be able to use .map
     // Step 2: Map each ingredient name (iKey = ingredient key) to return an empty array corresponding to its key's index
@@ -27,7 +27,7 @@ const burger = (props) => {
         }, []);
 
     if (transformedIngredients.length === 0) {
-        transformedIngredients = <p>Start building your gourmet burger!</p>;
+        transformedIngredients = <p>Let's build your gourmet burger!</p>;
     }
 
     return (

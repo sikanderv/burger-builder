@@ -19,20 +19,22 @@ class App extends Component {
 
   render() {
 
-    // Guarding routes
+    
     let routes = (
-      <Switch>
-        <Route path="/auth" component={Auth} />
+      <Switch>      
         <Route path="/" exact component={BurgerBuilder} />
+        <Route path="/auth" component={Auth} />
         <Redirect to="/"/>        
       </Switch>
     );
 
+    // Guarding routes
     if (this.props.isAuthenticated) {
       routes = (
         <Switch>
           <Route path="/checkout" component={Checkout} />
           <Route path="/orders" component={Orders} />
+          <Route path="/auth" component={Auth} />
           <Route path="/logout" component={Logout} />
           <Route path="/" exact component={BurgerBuilder} />
           <Redirect to="/"/>
